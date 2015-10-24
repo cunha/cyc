@@ -10,7 +10,7 @@
 /*****************************************************************************
  * cyclic struct and function declarations
  ****************************************************************************/
-#define CYCLIC_LINEBUF 65535
+#define CYCLIC_LINEBUF 1024
 #define CYC_FILESIZE (1<<0)
 #define CYC_PERIODIC (1<<1)
 
