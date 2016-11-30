@@ -10,8 +10,7 @@
  * This code is copyrighted by Italo Cunha (cunha@dcc.ufmg.br) and released
  * under the latest version of the GPL. */
 
-#ifndef __CYC_HEADER__
-#define __CYC_HEADER__
+#pragma once
 
 #include <stdarg.h>
 
@@ -47,5 +46,3 @@ void cyc_flush(struct cyclic *cyc);
  * protected by any mutexes. */
 void cyc_file_lock(struct cyclic *cyc);
 void cyc_file_unlock(struct cyclic *cyc);
-
-#endif

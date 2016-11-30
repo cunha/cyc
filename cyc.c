@@ -1,11 +1,11 @@
+#include "cyc.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-
-#include "cyc.h"
 
 /*****************************************************************************
  * cyclic struct and function declarations
