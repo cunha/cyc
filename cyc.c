@@ -1,8 +1,9 @@
 #include "cyc.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -43,8 +44,8 @@ struct cyclic * cyc_init_periodic(const char *prefix, unsigned period) /* {{{ */
 	cyc->type = CYC_PERIODIC;
 	cyc->prefix = strdup(prefix);
 	if(!cyc->prefix) goto out;
-	cyc->nbackups = -1;
-	cyc->maxsize = -1;
+	cyc->nbackups = UINT_MAX;
+	cyc->maxsize = UINT_MAX;
 	cyc->period = period;
 	cyc->period_start = 0;
 	cyc->file = NULL;
@@ -72,7 +73,7 @@ struct cyclic * cyc_init_filesize(const char *prefix, /* {{{ */
 	if(!cyc->prefix) goto out;
 	cyc->nbackups = nbackups;
 	cyc->maxsize = maxsize;
-	cyc->period = -1;
+	cyc->period = UINT_MAX;
 	cyc->period_start = -1;
 	cyc->file = NULL;
 	if(pthread_mutex_init(&(cyc->lock), NULL)) goto out;
@@ -175,8 +176,8 @@ static int cyc_check_open_file(struct cyclic *cyc) /* {{{ */
 	if(cyc->flock && cyc->file) return 1;
 	switch(cyc->type) {
 		case CYC_PERIODIC: {
-			unsigned now = time(NULL);
-			if(!cyc->file || now-cyc->period_start > cyc->period) {
+			time_t now = time(NULL);
+			if(!cyc->file || now - cyc->period_start > cyc->period) {
 				return cyc_open_periodic(cyc);
 			}
 			break;
@@ -220,19 +221,19 @@ static int cyc_open_filesize(struct cyclic *cyc) /* {{{ */
 {
 	if(cyc->file) fclose(cyc->file);
 	cyc->file = NULL;
-	int bufsz = strlen(cyc->prefix) + 80;
+	size_t bufsz = strlen(cyc->prefix) + 80;
 	char *fname = malloc(bufsz);
 	if(!fname) return 0;
 
-	int i;
-	for(i = cyc->nbackups - 2; i >= 0; i--) {
+	unsigned i;
+	for(i = cyc->nbackups - 2; i != UINT_MAX; i--) {
 		fname[0] = '\0';
-		sprintf(fname, "%s.%d", cyc->prefix, i);
+		sprintf(fname, "%s.%u", cyc->prefix, i);
 		if(access(fname, F_OK)) continue;
 		char *fnew = malloc(bufsz);
 		if(!fnew) goto out_fname;
 		fnew[0] = '\0';
-		sprintf(fnew, "%s.%d", cyc->prefix, i+1);
+		sprintf(fnew, "%s.%u", cyc->prefix, i+1);
 		rename(fname, fnew);
 		free(fnew);
 	}
@@ -241,7 +242,7 @@ static int cyc_open_filesize(struct cyclic *cyc) /* {{{ */
 	cyc->file = fopen(fname, "w");
 	free(fname);
 	if(!cyc->file) return 0;
-	if(setvbuf(cyc->file, NULL, _IOLBF, 0));
+	if(setvbuf(cyc->file, NULL, _IOLBF, 0)) return 0;
 	return 1;
 
 	out_fname:
